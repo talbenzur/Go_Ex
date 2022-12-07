@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -41,13 +42,13 @@ func main() {
         return fmt.Sprintf("%d: %s", i+1, sel.Text())
     })
     myword:=strings.Split( words[0:1][0], " ")
-    fmt.Println(myword[1][:len(myword[1])-1])
+    //fmt.Println(myword[1][:len(myword[1])-1])
 
-    match := sampleRegexp.MatchString("[1-9]{2,3}%")
-
+    sampleRegexp := regexp.MustCompile(`\d{1,3}`)
+    match := sampleRegexp.FindString(myword[1])
+    fmt.Println(match)
 }
 
-//table table--left table--inner-borders-rows
 
 /*
 func main() {
