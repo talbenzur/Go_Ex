@@ -12,15 +12,6 @@ import (
 	"os"
 )
 
-type weather struct {
-	minTepm  float32
-	maxTemp  float32
-	humidity int
-	wind     float32
-	rain     int
-	city     string
-}
-
 type Response struct {
 	Cod     string `json:"cod"`
 	Message int    `json:"message"`
@@ -117,7 +108,7 @@ type ResponseOne struct {
 	Cod      int    `json:"cod"`
 }
 
-func main() {
+func mainOpen() {
 
 	lon, lat := getLonLat("jerusalem")
 
@@ -148,6 +139,8 @@ func main() {
 	fmt.Println(forcastRain(w, 4), getMaxTemp(w, 4), getMinTemp(w, 4))
 
 }
+
+
 func getLonLat(city string) (float64, float64) {
 	url := "http://api.openweathermap.org/data/2.5/weather?q=" + city + ",israel&APPID=104207efce9188324c22416dc6475c94"
 	responseOne, errOne := http.Get(url)

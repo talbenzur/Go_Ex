@@ -7,18 +7,9 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
-
 	"github.com/PuerkitoBio/goquery"
 )
 
-//	type weather struct {
-//		minTepm  float32
-//		maxTemp  float32
-//		humidity int
-//		wind     float32
-//		rain     int
-//		city     string
-//	}
 type selector struct {
 	minTemp  string
 	maxTemp  string
@@ -29,7 +20,7 @@ type selector struct {
 
 var arr []weather
 
-func main() {
+func mainAtlas() {
 
 	fmt.Println("Enter Your City Name: ")
 	var city string
@@ -128,24 +119,3 @@ func scrapeValues(doc *goquery.Document, selector string, days int) []float32 {
 	}
 	return floatArr
 }
-
-// func getURL(webURL string) *goquery.Document {
-// 	resp, err := http.Get(webURL)
-
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	defer resp.Body.Close()
-
-// 	doc, err := goquery.NewDocumentFromReader(resp.Body)
-
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	if resp.StatusCode != 200 {
-// 		log.Fatalf("failed to fetch data: %d %s", resp.StatusCode, resp.Status)
-// 	}
-// 	return doc
-// }
