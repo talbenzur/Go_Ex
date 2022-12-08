@@ -1,3 +1,5 @@
+//go get github.com/PuerkitoBio/goquery
+
 package main
 
 import (
