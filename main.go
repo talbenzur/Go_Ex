@@ -1,14 +1,17 @@
+//go get github.com/PuerkitoBio/goquery
+
 package main
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 type weather struct {
@@ -54,7 +57,7 @@ func getURL(webURL string) *goquery.Document {
 }
 
 func willItRain(webURL string, selector string, regex string, city string, days int) string {
-	doc := getURL(webURL+city)
+	doc := getURL(webURL + city)
 
 	words := doc.Find(selector).Map(func(i int, sel *goquery.Selection) string {
 		return fmt.Sprintf("%d: %s", i+1, sel.Text())
@@ -188,7 +191,7 @@ func getWind(doc *goquery.Document, days int) []float32 {
 }
 
 func weatherSummary(webURL string, selector string, reg string) weather {
-	webURL = webURL +"jerusalem"+ "/ext"
+	webURL = webURL + "jerusalem" + "/ext"
 	doc := getURL(webURL)
 	wind := getWind(doc, 1)
 	minTemp, maxTemp := getTemp(doc, 1)
