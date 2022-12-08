@@ -1,38 +1,33 @@
-//go get github.com/PuerkitoBio/goquery
-
 package main
 
 import (
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 type weather struct {
-	temp     tempPerDay
-	humidity string
-	wind     string
-	rain     string
-}
-
-type tempPerDay struct {
-	minTepm int
-	maxTemp int
+	minTepm  float32
+	maxTemp  float32
+	humidity int
+	wind     float32
+	rain     int
+	city     string
 }
 
 func main() {
 
-	webPage := "https://www.timeanddate.com/weather/israel/jerusalem"
+	webPage := "https://www.timeanddate.com/weather/israel/"
 	selector := "table.table--left.table--inner-borders-rows tbody tr:nth-child(6) td:nth-child(2)"
 	regex := `\d{1,3}`
 	days := 5
 
-	willItRain(webPage, selector, regex, days)
+	willItRain(webPage, selector, regex, "jerusalem", days)
 	weatherSummary(webPage, selector, regex)
 
 }
@@ -58,8 +53,8 @@ func getURL(webURL string) *goquery.Document {
 	return doc
 }
 
-func willItRain(webURL string, selector string, regex string, days int) string {
-	doc := getURL(webURL)
+func willItRain(webURL string, selector string, regex string, city string, days int) string {
+	doc := getURL(webURL+city)
 
 	words := doc.Find(selector).Map(func(i int, sel *goquery.Selection) string {
 		return fmt.Sprintf("%d: %s", i+1, sel.Text())
@@ -71,8 +66,8 @@ func willItRain(webURL string, selector string, regex string, days int) string {
 	return match
 }
 
-func getRain(doc *goquery.Document, days int) []string {
-	var arr []string
+func getRain(doc *goquery.Document, days int) []int {
+	var arr []int
 
 	n := days + 1
 	for i := 1; i < n; i++ {
@@ -81,15 +76,22 @@ func getRain(doc *goquery.Document, days int) []string {
 		rainChance := doc.Find(rainPercentage).Map(func(i int, sel *goquery.Selection) string {
 			return sel.Text()
 		})
+		sampleRegexp := regexp.MustCompile(`\d{1,2}`)
+		match := sampleRegexp.FindString(rainChance[0])
+		intVal, err := strconv.Atoi(match)
 
-		// res := strings.Split(words[0:1][0], " ")
-		arr = append(arr, rainChance[0])
+		if err != nil {
+			fmt.Print(err.Error())
+			os.Exit(1)
+		}
+		arr = append(arr, intVal)
+
 	}
 	return arr
 }
 
-func getHumidity(doc *goquery.Document, days int) []string {
-	var arr []string
+func getHumidity(doc *goquery.Document, days int) []int {
+	var arr []int
 
 	n := days + 1
 	for i := 1; i < n; i++ {
@@ -98,16 +100,22 @@ func getHumidity(doc *goquery.Document, days int) []string {
 		rainChance := doc.Find(rainPercentage).Map(func(i int, sel *goquery.Selection) string {
 			return sel.Text()
 		})
+		sampleRegexp := regexp.MustCompile(`\d{1,2}`)
+		match := sampleRegexp.FindString(rainChance[0])
+		intVal, err := strconv.Atoi(match)
+		if err != nil {
+			fmt.Print(err.Error())
+			os.Exit(1)
+		}
+		arr = append(arr, intVal)
 
-		// res := strings.Split(words[0:1][0], " ")
-		arr = append(arr, rainChance[0])
 	}
 	return arr
 }
 
-func getTemp(doc *goquery.Document, days int) ([]string, []string) {
-	var arrMax []string
-	var arrMin []string
+func getTemp(doc *goquery.Document, days int) ([]float32, []float32) {
+	var arrMax []float32
+	var arrMin []float32
 
 	n := days + 1
 	for i := 1; i < n; i++ {
@@ -126,54 +134,37 @@ func getTemp(doc *goquery.Document, days int) ([]string, []string) {
 		sampleRegexp2 := regexp.MustCompile(`(\d{1,2} \/ )(\d{1,2})`)
 		matchMin := sampleRegexp2.FindAllStringSubmatch(minTemps[0], -1)
 
-		arrMax = append(arrMax, matchMax)
-		arrMin = append(arrMin, matchMin[0][2])
+		maxVal, err := strconv.ParseFloat(matchMax, 32)
+		minVal, err := strconv.ParseFloat(matchMin[0][2], 32)
+
+		if err != nil {
+			fmt.Print(err.Error())
+			os.Exit(1)
+		}
+		arrMax = append(arrMax, float32(maxVal))
+		arrMin = append(arrMin, float32(minVal))
 
 	}
 	return arrMax, arrMin
 }
 
-func averageTemp(doc *goquery.Document, city string, days int) int {
-	var arrMax []string
-	var arrMin []string
-	var averageDayTemp []int
-	arrMax, arrMin = getTemp(doc, days)
-	var averageFinal int = 0
+func averageTemp(doc *goquery.Document, city string, days int) float32 {
+	var averageDayTemp []float32
+	arrMax, arrMin := getTemp(doc, days)
+	var averageFinal float32 = 0
 
 	for i := 0; i < len(arrMax); i++ {
-		intVar1, err1 := strconv.Atoi(arrMax[i])
-		intVar2, err2 := strconv.Atoi(arrMin[i])
-		if err1 == nil && err2 == nil {
-			average := (intVar1 + intVar2) / 2
-			averageDayTemp = append(averageDayTemp, average)
-		}
+		average := (arrMax[i] + arrMin[i]) / 2
+		averageDayTemp = append(averageDayTemp, average)
 	}
-
 	for i := 0; i < len(averageDayTemp); i++ {
 		averageFinal = averageDayTemp[i] + averageFinal
 	}
-	return (averageFinal / days)
+	return (averageFinal / float32(days))
 }
 
-func tempArray(doc *goquery.Document, city string, days int) []tempPerDay {
-	var arrMax []string
-	var arrMin []string
-	var tempPerDayArr []tempPerDay
-
-	arrMax, arrMin = getTemp(doc, days)
-
-	for i := 0; i < days; i++ {
-		intVar1, err1 := strconv.Atoi(arrMax[i])
-		intVar2, err2 := strconv.Atoi(arrMin[i])
-		if err1 == nil && err2 == nil {
-			tempPerDayArr = append(tempPerDayArr, tempPerDay{intVar1, intVar2})
-		}
-	}
-	return tempPerDayArr
-}
-
-func getWind(doc *goquery.Document, days int) []string {
-	var windArr []string
+func getWind(doc *goquery.Document, days int) []float32 {
+	var windArr []float32
 	n := days + 1
 	for i := 1; i < n; i++ {
 		wind := fmt.Sprint("table tbody tr:nth-child(", i, ") td:nth-child(6)")
@@ -181,19 +172,29 @@ func getWind(doc *goquery.Document, days int) []string {
 		windGet := doc.Find(wind).Map(func(i int, sel *goquery.Selection) string {
 			return sel.Text()
 		})
-		windArr = append(windArr, windGet[0])
+		sampleRegexp := regexp.MustCompile(`\d{1,2}`)
+		match := sampleRegexp.FindString(windGet[0])
+		floatVal, err := strconv.ParseFloat(match, 32)
+
+		if err != nil {
+			fmt.Print(err.Error())
+			os.Exit(1)
+		}
+		windArr = append(windArr, float32(floatVal))
+
 	}
+
 	return windArr
 }
 
 func weatherSummary(webURL string, selector string, reg string) weather {
-	webURL = webURL + "/ext"
+	webURL = webURL +"jerusalem"+ "/ext"
 	doc := getURL(webURL)
 	wind := getWind(doc, 1)
-	temp := tempArray(doc, "jerusalem", 1)
+	minTemp, maxTemp := getTemp(doc, 1)
 	humidity := getHumidity(doc, 1)
 	rain := getRain(doc, 1)
-	var todayWeather = weather{temp[0], humidity[0], wind[0], rain[0]}
+	var todayWeather = weather{minTemp[0], maxTemp[0], humidity[0], wind[0], rain[0], "jerusalem"}
 	fmt.Println(todayWeather)
 	return todayWeather
 }
