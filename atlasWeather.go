@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -20,14 +21,7 @@ type selector struct {
 
 var arr []weather
 
-func mainAtlas() {
-
-	fmt.Println("Enter Your City Name: ")
-	var city string
-	fmt.Scanln(&city)
-	fmt.Println("Select the number of days you would like to see the weather forecast for: ")
-	var days int
-	fmt.Scanln(&days)
+func mainAtlas(city string, days int) []weather {
 
 	webPage := "https://www.weather-atlas.com/en/israel/" + city + "-long-term-weather-forecast"
 
@@ -47,7 +41,7 @@ func mainAtlas() {
 
 	// days := 5
 
-	atlasWeatherSummary(webPage,
+	return atlasWeatherSummary(webPage,
 		selector{MinTempSelector,
 			MaxTempSelector,
 			HumiditySelector, WindSelector,
@@ -82,9 +76,14 @@ func convertMapToWethers(valuesMap map[string][]float32, days int, city string) 
 	var whetherList []weather
 
 	for i := 0; i < days; i++ {
-		whetherList = append(whetherList, weather{valuesMap["minTemp"][i], valuesMap["maxTemp"][i], int(valuesMap["humidity"][i]), valuesMap["wind"][i], int(valuesMap["rain"][i]), city})
+		if valuesMap["minTemp"][i] > valuesMap["maxTemp"][i] {
+			whetherList = append(whetherList, weather{valuesMap["minTemp"][i], valuesMap["minTemp"][i], int(valuesMap["humidity"][i]), valuesMap["wind"][i], int(valuesMap["rain"][i]), city})
+		} else {
+			whetherList = append(whetherList, weather{valuesMap["minTemp"][i], valuesMap["maxTemp"][i], int(valuesMap["humidity"][i]), valuesMap["wind"][i], int(valuesMap["rain"][i]), city})
+		}
+
 	}
-	fmt.Println(whetherList)
+	// fmt.Println(whetherList)
 	return whetherList
 }
 

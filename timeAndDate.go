@@ -4,40 +4,19 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
+func mainTime(city string, days int) []weather {
 
+	var webPage string = "https://www.timeanddate.com/weather/israel/"
 
-func mainTime() {
-
-	days := 5
-
-	willItRain(webPage,"jerusalem", days)
-	weatherSummary(webPage)
-}
-
-func willItRain(webURL string, city string, days int) string {
-	selectorTime := "table.table--left.table--inner-borders-rows tbody tr:nth-child(6) td:nth-child(2)"
-	regex := `\d{1,3}`
-
-	doc := getURL(webURL + city)
-
-	words := doc.Find(selector).Map(func(i int, sel *goquery.Selection) string {
-		return fmt.Sprintf("%d: %s", i+1, sel.Text())
-	})
-	myword := strings.Split(words[0:1][0], " ")
-
-	sampleRegexp := regexp.MustCompile(regex)
-	match := sampleRegexp.FindString(myword[1])
-	return match
+	// willItRain(webPage, city, days)
+	return weatherSummary(webPage, city, days)
 }
 
 func getRain(doc *goquery.Document, days int) []int {
@@ -161,14 +140,16 @@ func getWind(doc *goquery.Document, days int) []float32 {
 	return windArr
 }
 
-func weatherSummary(webURL string) weather {
-	webURL = webURL + "jerusalem" + "/ext"
+func weatherSummary(webURL string, city string, days int) []weather {
+	webURL = webURL + city + "/ext"
 	doc := getURL(webURL)
-	wind := getWind(doc, 1)
-	minTemp, maxTemp := getTemp(doc, 1)
-	humidity := getHumidity(doc, 1)
-	rain := getRain(doc, 1)
-	var todayWeather = weather{minTemp[0], maxTemp[0], humidity[0], wind[0], rain[0], "jerusalem"}
-	fmt.Println(todayWeather)
-	return todayWeather
+	wind := getWind(doc, days)
+	minTemp, maxTemp := getTemp(doc, days)
+	humidity := getHumidity(doc, days)
+	rain := getRain(doc, days)
+	var weatherArray []weather
+	for i := 0; i < days; i++ {
+		weatherArray = append(weatherArray, weather{minTemp[i], maxTemp[i], humidity[i], wind[i], rain[i], city})
+	}
+	return weatherArray
 }

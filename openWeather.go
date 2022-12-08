@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	// "regexp"
 	// "strings"
 	// "github.com/PuerkitoBio/goquery"
@@ -108,9 +109,9 @@ type ResponseOne struct {
 	Cod      int    `json:"cod"`
 }
 
-func mainOpen() {
+func mainOpen(city string, days int) []weather {
 
-	lon, lat := getLonLat("jerusalem")
+	lon, lat := getLonLat(city)
 
 	lonStr := fmt.Sprintf("%f", lon)
 	latStr := fmt.Sprintf("%f", lat)
@@ -135,11 +136,17 @@ func mainOpen() {
 	json.Unmarshal(responseData, &responseObject)
 	dailySum(responseObject, 0)
 	w := convertJsonToWeather(responseObject)
-	// fmt.Println(w)
-	fmt.Println(forcastRain(w, 4), getMaxTemp(w, 4), getMinTemp(w, 4))
+	return (getWeatherDays(days, w))
+	// fmt.Println(forcastRain(w, days), getMaxTemp(w, days), getMinTemp(w, days))
 
 }
-
+func getWeatherDays(days int, weatherArr []weather) []weather {
+	var weatherDays []weather
+	for i := 0; i < days; i++ {
+		weatherDays = append(weatherDays, weatherArr[i])
+	}
+	return weatherDays
+}
 
 func getLonLat(city string) (float64, float64) {
 	url := "http://api.openweathermap.org/data/2.5/weather?q=" + city + ",israel&APPID=104207efce9188324c22416dc6475c94"
@@ -164,7 +171,7 @@ func getLonLat(city string) (float64, float64) {
 func dailySum(responseObject Response, i int) weather {
 
 	var w weather
-	w.minTepm = float32(responseObject.List[i].Main.TempMin)
+	w.minTemp = float32(responseObject.List[i].Main.TempMin)
 	w.maxTemp = float32(responseObject.List[i].Main.TempMax)
 	w.wind = float32(responseObject.List[i].Wind.Speed)
 	w.humidity = responseObject.List[i].Main.Humidity
@@ -199,7 +206,7 @@ func getMinTemp(wArr []weather, day int) []float32 {
 	var minTempArr []float32
 
 	for i := 0; i < day; i++ {
-		minTempArr = append(minTempArr, wArr[i].minTepm)
+		minTempArr = append(minTempArr, wArr[i].minTemp)
 	}
 	return minTempArr
 }
@@ -207,7 +214,7 @@ func getMaxTemp(wArr []weather, day int) []float32 {
 	var maxTempArr []float32
 
 	for i := 0; i < day; i++ {
-		maxTempArr = append(maxTempArr, wArr[i].minTepm)
+		maxTempArr = append(maxTempArr, wArr[i].minTemp)
 	}
 	return maxTempArr
 }
@@ -216,7 +223,7 @@ func avgTemp(wArr []weather, day int) float32 {
 	var maxRes float32
 
 	for i := 0; i < day; i++ {
-		minRes += wArr[i].minTepm
+		minRes += wArr[i].minTemp
 		maxRes += wArr[i].maxTemp
 	}
 	avgMin := minRes / float32(day)
