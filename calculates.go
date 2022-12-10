@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -17,19 +16,81 @@ type weather struct {
 	city     string
 }
 
-func mainCal(city string, days int) {
+// func mainCal(city string, days int) {
 
+// 	valAtlas := mainAtlas(city, days)
+// 	valTime := mainTime(city, days)
+// 	valOpen := mainOpen(city, days)
+// 	fmt.Println(getMaxAndMinTemp(averageWeather(valAtlas, valTime, valOpen, days)))
+// 	fmt.Println(willItRain(averageDaysFromSite(valAtlas, valTime, valOpen, days), days))
+// }
+
+func getDataFromMoldules(city string, days int) ([]weather, []weather, []weather) {
 	valAtlas := mainAtlas(city, days)
 	valTime := mainTime(city, days)
 	valOpen := mainOpen(city, days)
-	fmt.Println(getMaxAndMinTemp(averageWeather(valAtlas, valTime, valOpen, days)))
-	fmt.Println(willItRain(averageDaysFromSite(valAtlas, valTime, valOpen, days), days))
+	return valAtlas, valTime, valOpen
+
+}
+func willItRainClient(city string, days int) []int {
+	valAtlas, valTime, valOpen := getDataFromMoldules(city, days)
+	return willItRain(averageDaysFromSite(valAtlas, valTime, valOpen, days), days)
+
+}
+func nextRainDay(city string, days int) int {
+	valAtlas, valTime, valOpen := getDataFromMoldules(city, days)
+	rainPercentages := willItRain(averageDaysFromSite(valAtlas, valTime, valOpen, days), days)
+
+	for i := 0; i < days; i++ {
+		if rainPercentages[i] > 50 {
+			return i
+		}
+	}
+	return -1
 }
 
-func willItRain(averageDaysFromSite []weather, days int) []string {
-	var rain []string
+func avgTempretureClient(city string, days int) [2]float32 {
+
+	valAtlas, valTime, valOpen := getDataFromMoldules(city, days)
+	min, max := getMaxAndMinTemp(averageWeather(valAtlas, valTime, valOpen, days))
+	// avg := (min + max) / 2
+	var res [2]float32
+	res[0] = min
+	res[1] = max
+
+	return res
+}
+func minMaxTempTill(city string, days int) ([]float32, []float32) {
+	valAtlas, valTime, valOpen := getDataFromMoldules(city, days)
+	// var res[2] [] float32
+	weatherDays := averageDaysFromSite(valAtlas, valTime, valOpen, days)
+	var min []float32
+	var max []float32
+
+	for i := 0; i < days; i++ {
+
+		min = append(min, weatherDays[i].minTemp)
+		max = append(max, weatherDays[i].maxTemp)
+
+	}
+
+	return min, max
+
+}
+func todaySum(city string) weather {
+	valAtlas, valTime, valOpen := getDataFromMoldules(city, 1)
+	w := averageWeather(valAtlas, valTime, valOpen, 1)
+
+	return w
+}
+
+//=======================
+
+// =======================
+func willItRain(averageDaysFromSite []weather, days int) []int {
+	var rain []int
 	for _, dailyWeather := range averageDaysFromSite {
-		rain = append(rain, string(dailyWeather.rain)+"% ")
+		rain = append(rain, dailyWeather.rain) //here we should add %
 	}
 	return rain
 }
